@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Социальное такси — Курган</title>
+  <script src="https://st.max.ru/js/max-web-app.js" onerror="console.log('WebApp SDK не загружен — демо-режим')"></script>
+  <style>
+    :root {
+      --bg:         #0d1b2a;
+      --bg-card:    #132232;
+      --bg-input:   #1a2d42;
+      --border:     #1e3a52;
+      --border-focus: #3a7fbd;
+      --accent:     #2e7fc9;
+      --accent-2:   #1a5fa0;
+      --accent-glow:rgba(46,127,201,.25);
+      --text:       #e8f0f8;
+      --text-muted: #7a9ab8;
+      --text-label: #a8c0d8;
+      --success:    #29a87a;
+      --success-bg: rgba(41,168,122,.12);
+      --warn:       #e09a2e;
+      --warn-bg:    rgba(224,154,46,.12);
+      --error:      #e05555;
+      --error-bg:   rgba(224,85,85,.12);
+      --radius:     10px;
+      --transition: .18s ease;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    *, *::before, *::after{ box-sizing: border-box; margin: 0; padding: 0; }
+    html, body{
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    body{ padding: 0 0 40px; max-width: 600px; margin: 0 auto; }
+
+    /* ── HEADER ── */
+    .header{
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .header-title{ flex: 1; }
+    .header-title h1{ font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .header-title p{ font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .btn-back{
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex; align-items: center; gap: 5px;
+      flex-shrink: 0;
+    }
+    .btn-back:hover{ color: var(--text); border-color: var(--border-focus); }
+
+    /* ── TAB NAVIGATION ── */
+    .tabs{
+      display: flex;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar{ display: none; }
+    .tab{
+      flex-shrink: 0;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .tab.active{ color: var(--accent); border-bottom-color: var(--accent); }
+    .tab:hover:not(.active){ color: var(--text); }
+
+    /* ── SCREENS ── */
+    .screen{ display: none; }
+    .screen.active{ display: block; }
+
+    /* ── CONTENT & SECTIONS ── */
+    .content{ padding: 16px 16px 0; }
+    .section{
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .section-title{
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--accent);
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .section-title::after{
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── FORM FIELDS ── */
+    .field{ margin-bottom: 12px; }
+    .field:last-child{ margin-bottom: 0; }
+    .field-row{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label{
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-label);
+      margin-bottom: 5px;
+    }
+    label .req{ color: var(--accent); margin-left: 2px; }
+    input[type="text"],
+    input[type="tel"],
+    input[type="date"],
+    input[type="time"],
+    select, textarea{
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      padding: 10px 13px;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input[readonly]{
+      background: rgba(30,58,82,.5);
+      color: var(--text-muted);
+      cursor: default;
+    }
+    input::placeholder, textarea::placeholder{ color: var(--text-muted); font-size: 13px; }
+    input:focus:not([readonly]), select:focus, textarea:focus{
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    input.invalid, select.invalid, textarea.invalid{
+      border-color: var(--error);
+      box-shadow: 0 0 0 3px var(--error-bg);
+    }
+    select{
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a9ab8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 34px;
+      cursor: pointer;
+    }
+    select option{ background: var(--bg-card); }
+    textarea{ resize: vertical; min-height: 70px; }
+    .error-msg{
+      font-size: 11.5px;
+      color: var(--error);
+      margin-top: 4px;
+      display: none;
+      align-items: center;
+      gap: 4px;
+    }
+    .error-msg.visible{ display: flex; }
+
+    /* ── CHECKBOXES ── */
+    .checkbox-group{ display: flex; flex-direction: column; gap: 9px; }
+    .checkbox-item{
+      display: flex; align-items: center; gap: 11px;
+      cursor: pointer; user-select: none;
+    }
+    .checkbox-item input[type="checkbox"]{ display: none; }
+    .checkbox-box{
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 5px;
+      background: var(--bg-input);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+    }
+    .checkbox-item input:checked ~ .checkbox-box{
+      background: var(--accent); border-color: var(--accent);
+    }
+    .checkbox-item input:checked ~ .checkbox-box::after{
+      content: '';
+      display: block;
+      width: 5px; height: 9px;
+      border: 2px solid white;
+      border-top: none; border-left: none;
+      transform: rotate(45deg) translate(-1px,-1px);
+    }
+    .checkbox-label{ font-size: 13.5px; color: var(--text); line-height: 1.3; }
+    .checkbox-label .hint{ display: block; font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+
+    /* ── CONSENT BLOCK ── */
+    .consent-block{
+      background: rgba(46,127,201,.07);
+      border: 1px solid rgba(46,127,201,.25);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .consent-block .checkbox-label{ font-size: 12.5px; color: var(--text-muted); }
+    .consent-block .checkbox-label a{ color: var(--accent); text-decoration: none; }
+
+    /* ── BANNERS ── */
+    .banner{
+      margin: 0 0 12px;
+      border-radius: var(--radius);
+      padding: 11px 13px;
+      font-size: 12.5px;
+      display: flex; gap: 9px; align-items: flex-start;
+      line-height: 1.5;
+    }
+    .banner-info{ background: rgba(46,127,201,.1); border: 1px solid rgba(46,127,201,.3); color: var(--text-muted); }
+    .banner-warn{ background: var(--warn-bg); border: 1px solid rgba(224,154,46,.35); color: #c8a870; }
+    .banner-success{ background: var(--success-bg); border: 1px solid rgba(41,168,122,.35); color: #70c8a0; }
+    .banner-error{ background: var(--error-bg); border: 1px solid rgba(224,85,85,.35); color: #e09090; }
+    .banner span:first-child{ font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+    .banner a{ color: inherit; }
+
+    /* ── COST CALC ── */
+    .cost-block{
+      background: rgba(46,127,201,.08);
+      border: 1px solid rgba(46,127,201,.25);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 10px;
+    }
+    .cost-block .cost-title{
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--text-muted); margin-bottom: 6px;
+    }
+    .cost-amount{ font-size: 20px; font-weight: 800; color: var(--accent); }
+    .cost-note{ font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ── RETURN TRIP SECTION ── */
+    .return-trip-section{
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .return-trip-toggle{
+      display: flex; align-items: center; gap: 11px;
+      padding: 12px 13px;
+      cursor: pointer; user-select: none;
+      background: var(--bg-input);
+    }
+    .return-trip-fields{
+      display: none;
+      padding: 13px;
+      border-top: 1px solid var(--border);
+    }
+    .return-trip-fields.visible{ display: block; }
+
+    /* ── SUBMIT ── */
+    .submit-wrap{ padding: 0 16px; margin-top: 6px; }
+    .btn-submit{
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff; border: none;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 15px; font-weight: 700;
+      padding: 15px; cursor: pointer;
+      transition: opacity var(--transition), transform var(--transition);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-submit:hover{ opacity: .9; }
+    .btn-submit:active{ transform: scale(.98); opacity: .85; }
+    .btn-submit:disabled{ opacity: .45; cursor: not-allowed; transform: none; }
+
+    /* ── SPINNER ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner{
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    .btn-submit.loading .btn-text{ display: none; }
+    .btn-submit.loading .spinner{ display: block; }
+    input[type="date"]::-webkit-calendar-picker-indicator{ filter: invert(.5); cursor: pointer; }
+
+    /* ── SUCCESS SCREEN ── */
+    .success-screen{
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .success-icon{
+      width: 76px; height: 76px;
+      background: linear-gradient(135deg, var(--success), #1e8060);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 34px;
+      margin: 0 auto 22px;
+    }
+    .success-title{ font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+    .success-text{ font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+    .success-id{
+      display: inline-block;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 18px; font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    /* ── BTN HOME ── */
+    .btn-home{
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px; font-weight: 600;
+      padding: 12px 24px;
+      cursor: pointer; transition: var(--transition);
+    }
+    .btn-home:hover{ border-color: var(--border-focus); }
+
+    /* ── MY REQUESTS SCREEN ── */
+    .req-card{
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .req-card-header{
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .req-id{ font-size: 13px; font-weight: 700; color: var(--accent); }
+    .req-status{
+      font-size: 11px; font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .status-new{ background: rgba(46,127,201,.15); color: #5ea8e0; }
+    .status-confirmed{ background: var(--success-bg); color: #5ecaa0; }
+    .status-cancelled{ background: var(--error-bg); color: #e09090; }
+    .status-completed{ background: rgba(100,100,200,.15); color: #a0a8e0; }
+    .req-row{ font-size: 13px; color: var(--text-muted); margin-bottom: 4px; }
+    .req-row strong{ color: var(--text); }
+    .req-actions{ display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .btn-cancel-req{
+      background: var(--error-bg);
+      border: 1px solid rgba(224,85,85,.3);
+      border-radius: 7px;
+      color: var(--error);
+      font-family: var(--font);
+      font-size: 12px; font-weight: 600;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-cancel-req:hover{ background: rgba(224,85,85,.2); }
+    .btn-review-req{
+      background: rgba(240,192,64,.1);
+      border: 1px solid rgba(240,192,64,.3);
+      border-radius: 7px;
+      color: #f0c040;
+      font-family: var(--font);
+      font-size: 12px; font-weight: 600;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-review-req:hover{ background: rgba(240,192,64,.2); }
+    .empty-state{
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .icon{ font-size: 40px; margin-bottom: 14px; }
+    .empty-state p{ font-size: 14px; line-height: 1.6; }
+
+    /* ── FEEDBACK SCREEN ── */
+    .rating-row{
+      display: flex; gap: 8px; align-items: center;
+      margin-bottom: 14px;
+    }
+    .star{
+      font-size: 30px;
+      cursor: pointer;
+      transition: transform .15s;
+      color: var(--border);
+    }
+    .star.active{ color: #f0c040; }
+    .star:hover{ transform: scale(1.15); }
+    #feedback-success{
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--success-bg);
+      border: 1px solid rgba(41,168,122,.35);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-top: 12px;
+      color: #70c8a0;
+      font-size: 13.5px;
+    }
+
+    /* ── INFO BLOCKS (rules screen) ── */
+    .info-block{
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .info-block h3{
+      font-size: 13px; font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .info-block ul{ padding-left: 18px; }
+    .info-block li{
+      font-size: 13.5px; color: var(--text-muted);
+      margin-bottom: 6px; line-height: 1.5;
+    }
+    .info-block li strong{ color: var(--text); }
+    .price-table{ width: 100%; border-collapse: collapse; }
+    .price-table td{
+      padding: 6px 0; font-size: 13px; color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .price-table td:first-child{ color: var(--text); }
+    .price-table td:last-child{ text-align: right; color: var(--accent); font-weight: 700; }
+    .price-table tr:last-child td{ border-bottom: none; }
+    .schedule-grid{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .schedule-day{
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 9px 11px;
+      font-size: 12.5px;
+    }
+    .schedule-day .day{ font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .schedule-day .time{ color: var(--text-muted); }
+    .schedule-day.weekend .time{ color: var(--error); }
+
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-title">
+      <h1>Социальное такси</h1>
+      <p>г. Курган</p>
+    </div>
+    <button class="btn-back" onclick="goHome()">← Главная</button>
+  </header>
+
+  <!-- TABS -->
+  <nav class="tabs" id="tabs">
+    <div class="tab active" data-screen="screen-form" onclick="switchTab(this,'screen-form')">📝 Заявка</div>
+    <div class="tab" data-screen="screen-myrequests" onclick="switchTab(this,'screen-myrequests')">📋 Мои заявки</div>
+    <div class="tab" data-screen="screen-feedback" onclick="switchTab(this,'screen-feedback')">⭐ Отзыв</div>
+    <div class="tab" data-screen="screen-rules" onclick="switchTab(this,'screen-rules')">📖 Правила</div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════
+       ЭКРАН: ФОРМА ЗАЯВКИ
+  ════════════════════════════════════════════════════ -->
+  <div id="screen-form" class="screen active">
+    <div class="content">
+
+      <!-- Предупреждения -->
+      <div class="banner banner-warn">
+        <span>⚠️</span>
+        <span>Заявка подаётся <strong>не менее чем за 3 суток</strong> до поездки. Заявка считается принятой после подтверждения администратором.</span>
+      </div>
+      <div class="banner banner-info">
+        <span>💵</span>
+        <span>Отмена заявки — не позднее чем <strong>за 3 часа</strong> до поездки. Оплата производится <strong>наличными водителю</strong>.</span>
+      </div>
+      <div class="banner banner-info">
+        <span>📄</span>
+        <span>При посадке обязательно наличие <strong>документа, удостоверяющего личность</strong>.</span>
+      </div>
+
+      <!-- ПЕРСОНАЛЬНЫЕ ДАННЫЕ -->
+      <div class="section">
+        <div class="section-title">Персональные данные</div>
+
+        <div class="field">
+          <label for="fullname">ФИО <span class="req">*</span></label>
+          <input type="text" id="fullname" placeholder="Иванов Иван Иванович" autocomplete="off"/>
+          <div class="error-msg" id="err-fullname">Введите ФИО (только буквы и пробелы, минимум 2 слова)</div>
+        </div>
+        <div class="field">
+          <label for="phone">Контактный телефон <span class="req">*</span></label>
+          <input type="tel" id="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel"/>
+          <div class="error-msg" id="err-phone">Введите корректный номер телефона РФ</div>
+        </div>
+        <div class="field">
+          <label for="address">Адрес проживания <span class="req">*</span></label>
+          <input type="text" id="address" placeholder="ул. Ленина, д. 1, кв. 5" autocomplete="off"/>
+          <div class="error-msg" id="err-address">Укажите адрес проживания</div>
+        </div>
+      </div>
+
+      <!-- КАТЕГОРИЯ ГРАЖДАНИНА -->
+      <div class="section">
+        <div class="section-title">Категория гражданина</div>
+        <div class="field">
+          <label for="category">Категория <span class="req">*</span></label>
+          <select id="category">
+            <option value="">— Выберите категорию —</option>
+            <option value="disabled">Инвалид</option>
+            <option value="pensioner">Пенсионер</option>
+            <option value="svo">Участник СВО</option>
+            <option value="svo_family">Член семьи участника СВО</option>
+          </select>
+          <div class="error-msg" id="err-category">Выберите категорию гражданина</div>
+        </div>
+        <div class="field">
+          <label for="cert-number">Номер пенсионного или льготного удостоверения</label>
+          <input type="text" id="cert-number" placeholder="Серия и номер документа" autocomplete="off"/>
+        </div>
+      </div>
+
+      <!-- МЕСТО НАЗНАЧЕНИЯ -->
+      <div class="section">
+        <div class="section-title">Место назначения</div>
+
+        <div class="field">
+          <label for="dest-category">Категория учреждения <span class="req">*</span></label>
+          <select id="dest-category" >
+            <option value="">— Выберите категорию —</option>
+            <option value="gov">Органы государственной власти</option>
+            <option value="local_gov">Органы местного самоуправления</option>
+            <option value="healthcare">Учреждения здравоохранения</option>
+            <option value="social">Учреждения социального обслуживания</option>
+            <option value="disability_org">Общества инвалидов</option>
+            <option value="post">Почтовые отделения</option>
+            <option value="bank">Банки России</option>
+          </select>
+          <div class="error-msg" id="err-dest-category">Выберите категорию учреждения</div>
+        </div>
+
+        <div class="field" id="dest-institution-field" style="display:none">
+          <label for="dest-institution">Учреждение <span class="req">*</span></label>
+          <select id="dest-institution" >
+            <option value="">— Выберите учреждение —</option>
+          </select>
+          <div class="error-msg" id="err-dest-institution">Выберите учреждение</div>
+        </div>
+
+        <div class="dest-address-badge" id="dest-address-badge" style="display:none">
+          <span class="icon">📍</span>
+          <span id="dest-address-text"></span>
+        </div>
+
+        <div class="field" style="margin-top:12px">
+          <label for="dest-address">Адрес назначения <span class="req">*</span></label>
+          <input type="text" id="dest-address" placeholder="ул. Станционная, 44" autocomplete="off"/>
+          <div class="error-msg" id="err-dest-address">Укажите адрес назначения</div>
+        </div>
+      </div>
+
+      <!-- ДАННЫЕ О ПОЕЗДКЕ -->
+      <div class="section">
+        <div class="section-title">Данные о поездке</div>
+        <div class="field-row">
+          <div class="field">
+            <label for="trip-date">Дата поездки <span class="req">*</span></label>
+            <input type="date" id="trip-date" />
+            <div class="error-msg" id="err-trip-date">Минимум за 3 суток, не выходной</div>
+          </div>
+          <div class="field">
+            <label for="trip-time">Желаемое время <span class="req">*</span></label>
+            <input type="time" id="trip-time" value="09:00" />
+            <div class="error-msg" id="err-trip-time">Время работы: Пн–Чт 08:00–17:00, Пт 08:00–16:00</div>
+          </div>
+        </div>
+        <div id="date-warning" class="banner banner-warn" style="display:none;margin-top:4px;">
+          <span>⚠️</span><span id="date-warning-text"></span>
+        </div>
+      </div>
+
+      <!-- ДОПОЛНИТЕЛЬНЫЕ УСЛУГИ -->
+      <div class="section">
+        <div class="section-title">Дополнительные услуги</div>
+        <div class="checkbox-group">
+          <label class="checkbox-item">
+            <input type="checkbox" id="need-boarding-help"/>
+            <div class="checkbox-box"></div>
+            <span class="checkbox-label">Помощь при посадке и высадке
+              <span class="hint">Водитель поможет сесть в автомобиль</span>
+            </span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="need-companion"/>
+            <div class="checkbox-box"></div>
+            <span class="checkbox-label">Сопровождение
+              <span class="hint">В поездке будет сопровождающий</span>
+            </span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="need-waiting"/>
+            <div class="checkbox-box"></div>
+            <span class="checkbox-label">Ожидание (30 мин.)
+              <span class="hint">Летом: 148 руб., зимой: 188 руб.</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- ОБРАТНАЯ ПОЕЗДКА -->
+      <div class="section">
+        <div class="section-title">Обратная поездка</div>
+        <div class="return-trip-section">
+          <label class="return-trip-toggle checkbox-item">
+            <input type="checkbox" id="need-return" />
+            <div class="checkbox-box"></div>
+            <span class="checkbox-label">Нужна обратная поездка</span>
+          </label>
+          <div class="return-trip-fields" id="return-fields">
+            <div class="banner banner-info" style="margin-bottom:12px;">
+              <span>🔄</span>
+              <span>Обратный маршрут будет построен автоматически: от выбранного учреждения до адреса проживания.</span>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="return-date">Дата обратной поездки <span class="req">*</span></label>
+                <input type="date" id="return-date"/>
+                <div class="error-msg" id="err-return-date">Минимум за 3 суток, не выходной</div>
+              </div>
+              <div class="field">
+                <label for="return-time">Желаемое время <span class="req">*</span></label>
+                <input type="time" id="return-time" value="15:00"/>
+                <div class="error-msg" id="err-return-time">Время работы: Пн–Чт 08:00–17:00, Пт 08:00–16:00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- КОММЕНТАРИЙ -->
+      <div class="section">
+        <div class="section-title">Комментарий</div>
+        <div class="field">
+          <label for="comment">Дополнительная информация</label>
+          <textarea id="comment" placeholder="Укажите дополнительные пожелания, особенности маршрута или иную информацию…"></textarea>
+        </div>
+      </div>
+
+      <!-- СОГЛАСИЕ -->
+      <div class="consent-block">
+        <label class="checkbox-item">
+          <input type="checkbox" id="consent"/>
+          <div class="checkbox-box"></div>
+          <span class="checkbox-label">
+            Даю согласие на <a href="#">обработку персональных данных</a> в соответствии с Федеральным законом №152-ФЗ
+          </span>
+        </label>
+        <div class="error-msg" id="err-consent" style="margin-top:8px;">Необходимо дать согласие на обработку данных</div>
+      </div>
+      <div class="consent-block" style="margin-top:-4px;">
+        <label class="checkbox-item">
+          <input type="checkbox" id="consent-id"/>
+          <div class="checkbox-box"></div>
+          <span class="checkbox-label">
+            Подтверждаю, что уведомлен(а) о необходимости предъявления документа, удостоверяющего личность, водителю транспортного средства перед началом поездки.
+          </span>
+        </label>
+        <div class="error-msg" id="err-consent-id" style="margin-top:8px;">Необходимо подтвердить ознакомление</div>
+      </div>
+
+    </div><!-- /content -->
+
+    <div class="submit-wrap" style="padding-top:8px;">
+      <button class="btn-submit" id="btn-submit" onclick="submitForm()">
+        <span class="btn-text">📤 Отправить заявку</span>
+        <div class="spinner"></div>
+      </button>
+      <div style="text-align:center;margin-top:14px;font-size:12.5px;color:var(--text-muted);line-height:1.6;">
+        Если у вас остались вопросы — начните новый диалог в боте<br/>
+        или позвоните оператору:<br/>
+        <a href="tel:+73522459788" style="color:var(--accent);font-weight:700;font-size:14px;text-decoration:none;">8 (3522) 45-97-88</a>
+      </div>
+    </div>
+  </div><!-- /screen-form -->
+
+  <!-- ═══════════════════════════════════════════════════
+       ЭКРАН: УСПЕХ
+  ════════════════════════════════════════════════════ -->
+  <div id="screen-success" class="screen">
+    <div class="success-screen">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Заявка отправлена!</div>
+      <div class="success-text">
+        Ваша заявка передана администратору на рассмотрение.<br/>
+        После подтверждения вам придёт сообщение с данными автомобиля,<br/>
+        временем подачи и стоимостью поездки.
+      </div>
+      <div class="success-id" id="success-req-id">#------</div>
+      <br/>
+      <button class="btn-home" onclick="afterSuccess()">📋 Мои заявки</button>
+      <div style="margin-top:20px;font-size:12.5px;color:var(--text-muted);line-height:1.7;text-align:center;">
+        Если у вас остались вопросы — начните новый диалог в боте<br/>
+        или позвоните оператору:<br/>
+        <a href="tel:+73522459788" style="color:var(--accent);font-weight:700;font-size:14px;text-decoration:none;">8 (3522) 45-97-88</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       ЭКРАН: МОИ ЗАЯВКИ
+  ════════════════════════════════════════════════════ -->
+  <div id="screen-myrequests" class="screen">
+    <div class="content">
+      <div id="myrequests-content">
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>Загрузка заявок…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       ЭКРАН: ОТЗЫВ
+  ════════════════════════════════════════════════════ -->
+  <div id="screen-feedback" class="screen">
+    <div class="content">
+
+      <div class="section">
+        <div class="section-title">Оставить отзыв</div>
+
+        <div class="field">
+          <label for="feedback-request-id">Номер заявки</label>
+          <input type="text" id="feedback-request-id" placeholder="Например: ABC123" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label for="feedback-cost">Стоимость поездки (руб.)</label>
+          <input type="text" id="feedback-cost" placeholder="Например: 350" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label for="feedback-car">Автомобиль</label>
+          <input type="text" id="feedback-car" placeholder="Марка, номер" autocomplete="off"/>
+        </div>
+
+        <div class="field">
+          <label>Оценка оператора <span class="req">*</span></label>
+          <div class="rating-row">
+            <span class="star" onclick="setRating(1)">★</span>
+            <span class="star" onclick="setRating(2)">★</span>
+            <span class="star" onclick="setRating(3)">★</span>
+            <span class="star" onclick="setRating(4)">★</span>
+            <span class="star" onclick="setRating(5)">★</span>
+          </div>
+          <div class="error-msg" id="err-rating">Поставьте оценку оператору</div>
+        </div>
+
+        <div class="field">
+          <label for="feedback-text">Комментарий <span class="req">*</span></label>
+          <textarea id="feedback-text" placeholder="Ваш отзыв о поездке…" oninput="clearError('feedback-text')"></textarea>
+          <div class="error-msg" id="err-feedback-text">Введите текст отзыва</div>
+        </div>
+
+        <button class="btn-submit" id="btn-feedback" onclick="submitFeedback()" style="margin-top:4px;">
+          <span class="btn-text">⭐ Отправить отзыв</span>
+          <div class="spinner"></div>
+        </button>
+
+        <div id="feedback-success">
+          <span>✅</span>
+          <span>Спасибо! Ваш отзыв успешно отправлен.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       ЭКРАН: ПРАВИЛА
+  ════════════════════════════════════════════════════ -->
+  <div id="screen-rules" class="screen">
+    <div class="content">
+
+      <div class="info-block">
+        <h3>🕐 График работы</h3>
+        <div class="schedule-grid">
+          <div class="schedule-day">
+            <div class="day">Понедельник</div>
+            <div class="time">08:00 – 17:00</div>
+          </div>
+          <div class="schedule-day">
+            <div class="day">Вторник</div>
+            <div class="time">08:00 – 17:00</div>
+          </div>
+          <div class="schedule-day">
+            <div class="day">Среда</div>
+            <div class="time">08:00 – 17:00</div>
+          </div>
+          <div class="schedule-day">
+            <div class="day">Четверг</div>
+            <div class="time">08:00 – 17:00</div>
+          </div>
+          <div class="schedule-day">
+            <div class="day">Пятница</div>
+            <div class="time">08:00 – 16:00</div>
+          </div>
+          <div class="schedule-day weekend">
+            <div class="day">Суббота</div>
+            <div class="time">Выходной</div>
+          </div>
+          <div class="schedule-day weekend">
+            <div class="day">Воскресенье</div>
+            <div class="time">Выходной</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-block">
+        <h3>💰 Стоимость</h3>
+        <table class="price-table">
+          <tr><td>По г. Кургану</td><td>119 – 342 руб.</td></tr>
+          <tr><td>За пределами г. Кургана (за 1 км после выезда за черту города)</td><td>+ 22 руб./км</td></tr>
+          <tr><td>Ожидание 30 мин. (летний период)</td><td>148 руб.</td></tr>
+          <tr><td>Ожидание 30 мин. (зимний период)</td><td>188 руб.</td></tr>
+        </table>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Точная стоимость зависит от района города. Оплата наличными водителю. Администратор сообщит итоговую сумму при подтверждении заявки.</p>
+      </div>
+
+      <div class="info-block">
+        <h3>📋 Порядок подачи заявки</h3>
+        <ul>
+          <li>Заявка подаётся <strong>минимум за 3 суток</strong> до даты поездки.</li>
+          <li>После отправки заявки администратор её рассматривает и подтверждает через систему.</li>
+          <li><strong>Заявка считается принятой только после подтверждения администратором.</strong> После подтверждения вам придёт сообщение с данными автомобиля и стоимостью поездки.</li>
+          <li>Поездки выполняются только в рабочие дни согласно графику.</li>
+          <li>Социальное такси работает только по городу Кургану.</li>
+        </ul>
+      </div>
+
+      <div class="info-block">
+        <h3>🚫 Правила отмены</h3>
+        <ul>
+          <li>Отмена заявки возможна <strong>не позднее чем за 3 часа</strong> до времени поездки.</li>
+          <li>Для отмены воспользуйтесь разделом «Мои заявки» или свяжитесь с оператором.</li>
+          <li>Повторное оформление заявки возможно на другую дату.</li>
+        </ul>
+      </div>
+
+      <div class="info-block">
+        <h3>🪪 Документы для поездки</h3>
+        <ul>
+          <li>Паспорт или иной документ, <strong>удостоверяющий личность</strong>.</li>
+          <li>Для инвалидов — <strong>справка об инвалидности</strong> (МСЭК).</li>
+          <li>Для пенсионеров — <strong>пенсионное удостоверение</strong>.</li>
+          <li>Для участников СВО и членов их семей — соответствующее <strong>удостоверение</strong>.</li>
+          <li>Документы предъявляются водителю перед началом поездки.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       СКРИПТ
+  ════════════════════════════════════════════════════ -->
+  <script>
+  // ── КОНФИГУРАЦИЯ ENDPOINTS ────────────────────────
+  // TODO: заменить на реальные endpoint-ы при реализации бэкенда
+  const SUBMIT_URL   = '/api/submit-request';   // POST — отправка заявки
+  const MY_REQ_URL   = '/api/my-requests';      // GET  — ?userId=...
+  const CANCEL_URL   = '/api/cancel-request';   // POST — отмена заявки
+  const FEEDBACK_URL = '/api/submit-feedback';  // POST — отзыв
+
+  // ── MAX WebApp ────────────────────────────────────
+  let maxUserId = null;
+  if (window.WebApp) {
+    window.WebApp.ready();
+    window.WebApp.expand();
+    window.WebApp.enableClosingConfirmation();
+    const initData = window.WebApp.initDataUnsafe;
+    if (initData && initData.user) maxUserId = String(initData.user.id);
+  }
+
+  // ── КАТЕГОРИИ УЧРЕЖДЕНИЙ ──────────────────────────
+  // Список учреждений по каждой категории (только названия, без адресов).
+  // Адрес назначения пользователь вводит вручную в текстовое поле.
+  const INSTITUTIONS = {
+    gov:            ['Правительство Курганской области', 'Губернатор Курганской области (приёмная)', 'Прокуратура Курганской области'],
+    local_gov:      ['Администрация города Кургана', 'Городская дума Кургана', 'МФЦ «Мои документы» (ул. Куйбышева)', 'МФЦ «Мои документы» (ул. Коли Мяготина)'],
+    healthcare:     ['Курганская областная клиническая больница', 'Курганская городская больница №1', 'Городская поликлиника №1', 'Городская поликлиника №2', 'Городская поликлиника №3', 'Детская областная клиническая больница', 'Онкологический диспансер', 'Психоневрологический диспансер'],
+    social:         ['Курганский реабилитационный центр для детей и подростков с ОВ', 'Курганский центр социальной помощи семье и детям (ул. Ленина)', 'Социально-реабилитационный технический центр', 'Областной социально-реабилитационный центр для несовершеннолетних (бул. Мира)', 'Центр социального обслуживания населения по г. Кургану (ул. Красина, 70)', 'Центр социального обслуживания населения по г. Кургану (ул. Станционная)', 'Курганский центр социальной помощи семье и детям (ул. М. Горького)', 'Областной социально-реабилитационный центр для несовершеннолетних (ул. Войкова)', 'Центр социального обслуживания населения по г. Кургану (ул. Краснодонская)', 'Центр социального обслуживания населения по г. Кургану (ул. Пролетарская)'],
+    disability_org: ['Курганская областная организация ВОИ', 'Курганская организация ВОС', 'Курганская организация ВОГ'],
+    post:           ['Почта России — отделение №1 (гл. почтамт)', 'Почта России — отделение №3', 'Почта России — отделение №7', 'Почта России — отделение №10'],
+    bank:           ['Сбербанк (ул. Советская)', 'Сбербанк (ул. Ленина)', 'ВТБ Банк — Курган', 'Россельхозбанк — Курган', 'Газпромбанк — Курган'],
+  };
+
+  // ── ТЕСТОВЫЕ ЗАЯВКИ ───────────────────────────────
+  const MOCK_REQUESTS = [
+    {
+      id: 'REQ2025001',
+      status: 'confirmed',
+      tripDate: '2025-07-15',
+      tripTime: '09:30',
+      institution: 'Городская поликлиника №1',
+      address: 'ул. Ленина, 34',
+      cost: '280 руб.',
+      car: 'Лада Гранта А123БВ45',
+      operatorComment: '',
+    },
+    {
+      id: 'REQ2025002',
+      status: 'new',
+      tripDate: '2025-07-20',
+      tripTime: '11:00',
+      institution: 'МФЦ «Мои документы» (ул. Куйбышева)',
+      address: 'ул. Куйбышева, 144',
+      cost: '—',
+      car: '—',
+      operatorComment: '',
+    },
+    {
+      id: 'REQ2025003',
+      status: 'completed',
+      tripDate: '2025-06-28',
+      tripTime: '10:00',
+      institution: 'Пенсионный фонд (СФР) — Курган',
+      address: 'ул. Советская, 114',
+      cost: '200 руб.',
+      car: 'Лада Веста В456ГД45',
+      operatorComment: '',
+    },
+    {
+      id: 'REQ2025004',
+      status: 'cancelled',
+      tripDate: '2025-06-10',
+      tripTime: '14:00',
+      institution: 'Курганская областная клиническая больница',
+      address: 'ул. Томина, 63',
+      cost: '—',
+      car: '—',
+      operatorComment: 'Отменена по запросу клиента',
+    },
+  ];
+
+  // ── НАВИГАЦИЯ ─────────────────────────────────────
+  function switchTab(el, screenId) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById(screenId).classList.add('active');
+    if (screenId === 'screen-myrequests') loadMyRequests();
+  }
+
+  function goHome() {
+    if (window.WebApp) window.WebApp.close();
+  }
+
+  // ── ВЫБОР УЧРЕЖДЕНИЯ ──────────────────────────────
+  function onDestCategoryChange() {
+    const cat = document.getElementById('dest-category').value;
+    const instField = document.getElementById('dest-institution-field');
+    const instSel = document.getElementById('dest-institution');
+
+    clearError('dest-category');
+
+    if (!cat || !INSTITUTIONS[cat]) {
+      instField.style.display = 'none';
+      return;
+    }
+
+    instSel.innerHTML = '<option value="">— Выберите учреждение —</option>';
+    INSTITUTIONS[cat].forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      instSel.appendChild(opt);
+    });
+    instField.style.display = 'block';
+  }
+
+  function onDestInstitutionChange() {
+    clearError('dest-institution');
+  }
+
+  // ── ДАТА / ВРЕМЯ ──────────────────────────────────
+  function getMinDate() {
+    const d = new Date();
+    d.setDate(d.getDate() + 3);
+    return d;
+  }
+
+  function isWorkDay(date) {
+    const dow = date.getDay(); // 0=Sun, 6=Sat
+    return dow !== 0 && dow !== 6;
+  }
+
+  function isWorkTime(timeStr, dateStr) {
+    const dow = new Date(dateStr + 'T00:00:00').getDay();
+    if (dow === 0 || dow === 6) return false;
+    const [h, m] = timeStr.split(':').map(Number);
+    const mins = h * 60 + m;
+    const start = 8 * 60;
+    const end = (dow === 5) ? 16 * 60 : 17 * 60;
+    return mins >= start && mins <= end;
+  }
+
+  function onDateChange() {
+    const val = document.getElementById('trip-date').value;
+    const warn = document.getElementById('date-warning');
+    const warnText = document.getElementById('date-warning-text');
+    clearError('trip-date');
+
+    if (!val) { warn.style.display = 'none'; return; }
+
+    const sel = new Date(val + 'T00:00:00');
+    const min = getMinDate();
+    min.setHours(0,0,0,0);
+
+    if (sel < min) {
+      warnText.textContent = 'Дата должна быть не менее чем через 3 суток от сегодня.';
+      warn.style.display = 'flex';
+      return;
+    }
+    if (!isWorkDay(sel)) {
+      warnText.textContent = 'Выбранный день является выходным. Поездки выполняются Пн–Пт.';
+      warn.style.display = 'flex';
+      return;
+    }
+    warn.style.display = 'none';
+  }
+
+  function onTimeChange() {
+    clearError('trip-time');
+    const dateVal = document.getElementById('trip-date').value;
+    const timeVal = document.getElementById('trip-time').value;
+    if (dateVal && timeVal && !isWorkTime(timeVal, dateVal)) {
+      document.getElementById('err-trip-time').classList.add('visible');
+      document.getElementById('trip-time').classList.add('invalid');
+    }
+  }
+
+  function onReturnChange() {
+    const fields = document.getElementById('return-fields');
+    fields.classList.toggle('visible', document.getElementById('need-return').checked);
+  }
+
+  // ── ОШИБКИ ────────────────────────────────────────
+  function clearError(fieldId) {
+    const el = document.getElementById(fieldId);
+    if (el) { el.classList.remove('invalid'); }
+    const err = document.getElementById('err-' + fieldId);
+    if (err) err.classList.remove('visible');
+  }
+
+  function check(id, condition, isCheckbox) {
+    const el = document.getElementById(id);
+    const err = document.getElementById('err-' + id);
+    if (!condition) {
+      if (el && !isCheckbox) el.classList.add('invalid');
+      if (err) err.classList.add('visible');
+      return false;
+    }
+    if (el && !isCheckbox) el.classList.remove('invalid');
+    if (err) err.classList.remove('visible');
+    return true;
+  }
+
+  // ── ВАЛИДАЦИЯ ─────────────────────────────────────
+  function validate() {
+    let ok = true;
+
+    // ФИО
+    const fullname = document.getElementById('fullname').value.trim();
+    ok = check('fullname', fullname.length >= 5 && /^[а-яёА-ЯЁa-zA-Z\s\-]+$/.test(fullname) && fullname.split(/\s+/).filter(Boolean).length >= 2) && ok;
+
+    // Телефон
+    const phone = document.getElementById('phone').value.replace(/\D/g,'');
+    ok = check('phone', phone.length === 11 && phone[0] === '7') && ok;
+
+    // Адрес
+    ok = check('address', document.getElementById('address').value.trim().length >= 5) && ok;
+
+    // Категория гражданина
+    ok = check('category', !!document.getElementById('category').value) && ok;
+
+    // Категория учреждения
+    ok = check('dest-category', !!document.getElementById('dest-category').value) && ok;
+
+    // Учреждение
+    const instVisible = document.getElementById('dest-institution-field').style.display !== 'none';
+    if (instVisible) {
+      ok = check('dest-institution', !!document.getElementById('dest-institution').value) && ok;
+    }
+
+    // Адрес назначения — обязательное поле (пользователь вводит вручную)
+    ok = check('dest-address', document.getElementById('dest-address').value.trim().length >= 5) && ok;
+
+    // Дата поездки
+    const tripDate = document.getElementById('trip-date').value;
+    let dateOk = false;
+    if (tripDate) {
+      const sel = new Date(tripDate + 'T00:00:00');
+      const min = getMinDate(); min.setHours(0,0,0,0);
+      dateOk = sel >= min && isWorkDay(sel);
+    }
+    ok = check('trip-date', dateOk) && ok;
+
+    // Время поездки
+    const tripTime = document.getElementById('trip-time').value;
+    let timeOk = false;
+    if (tripDate && tripTime) timeOk = isWorkTime(tripTime, tripDate);
+    ok = check('trip-time', timeOk) && ok;
+
+    // Обратная поездка
+    if (document.getElementById('need-return').checked) {
+      const retDate = document.getElementById('return-date').value;
+      let retDateOk = false;
+      if (retDate) {
+        const sel = new Date(retDate + 'T00:00:00');
+        const min = getMinDate(); min.setHours(0,0,0,0);
+        retDateOk = sel >= min && isWorkDay(sel);
+      }
+      ok = check('return-date', retDateOk) && ok;
+
+      const retTime = document.getElementById('return-time').value;
+      let retTimeOk = false;
+      if (retDate && retTime) retTimeOk = isWorkTime(retTime, retDate);
+      ok = check('return-time', retTimeOk) && ok;
+    }
+
+    // Согласие
+    ok = check('consent', document.getElementById('consent').checked, true) && ok;
+    ok = check('consent-id', document.getElementById('consent-id').checked, true) && ok;
+
+    return ok;
+  }
+
+  // ── ОТПРАВКА ──────────────────────────────────────
+  async function submitForm() {
+    if (!validate()) {
+      // Скроллим к первой ошибке
+      const firstErr = document.querySelector('.error-msg.visible, .invalid');
+      if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    const btn = document.getElementById('btn-submit');
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    const needReturn = document.getElementById('need-return').checked;
+    const instSel = document.getElementById('dest-institution');
+    const selectedInst = instSel.options[instSel.selectedIndex];
+
+    const data = {
+      fullname:        document.getElementById('fullname').value.trim(),
+      phone:           document.getElementById('phone').value,
+      address:         document.getElementById('address').value.trim(),
+      category:        document.getElementById('category').value,
+      certNumber:      document.getElementById('cert-number').value.trim(),
+      destCategory:    document.getElementById('dest-category').value,
+      destInstitution: document.getElementById('dest-institution').value,
+      destAddress:     document.getElementById('dest-address').value.trim(),
+      tripDate:        document.getElementById('trip-date').value,
+      tripTime:        document.getElementById('trip-time').value,
+      boardingHelp:    document.getElementById('need-boarding-help').checked,
+      companion:       document.getElementById('need-companion').checked,
+      waiting:         document.getElementById('need-waiting').checked,
+      needReturn,
+      returnDate:      needReturn ? document.getElementById('return-date').value : '',
+      returnTime:      needReturn ? document.getElementById('return-time').value : '',
+      comment:         document.getElementById('comment').value.trim(),
+      submittedAt:     new Date().toISOString(),
+      senderUserId:    maxUserId,
+    };
+
+    try {
+      // TODO: endpoint SUBMIT_URL должен вернуть { requestId: '...' }
+      const resp = await fetch(SUBMIT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || 'HTTP ' + resp.status);
+      showSuccess(json.requestId);
+    } catch(e) {
+      // Демо-режим: без сервера всегда показываем успех
+      console.warn('Демо-режим (нет сервера):', e.message);
+      showSuccess('DEMO' + Date.now().toString().slice(-6));
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  function showSuccess(reqId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('screen-success').classList.add('active');
+    document.getElementById('success-req-id').textContent = '#' + (reqId || '').slice(-6).toUpperCase();
+    if (window.WebApp) {
+      window.WebApp.disableClosingConfirmation();
+      window.WebApp.HapticFeedback && window.WebApp.HapticFeedback.notificationOccurred('success');
+    }
+  }
+
+  function afterSuccess() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('screen-myrequests').classList.add('active');
+    document.querySelector('[data-screen="screen-myrequests"]').classList.add('active');
+    loadMyRequests();
+  }
+
+  // ── МОИ ЗАЯВКИ ────────────────────────────────────
+  async function loadMyRequests() {
+    const cont = document.getElementById('myrequests-content');
+    cont.innerHTML = '<div class="empty-state"><div class="icon" style="font-size:24px;margin-bottom:8px;">⏳</div><p>Загрузка…</p></div>';
+
+    if (!maxUserId) {
+      // Показываем тестовые данные если нет userId (вне бота)
+      renderMyRequests(MOCK_REQUESTS);
+      return;
+    }
+
+    try {
+      // TODO: endpoint MY_REQ_URL?userId=... должен вернуть { requests: [...] }
+      const resp = await fetch(MY_REQ_URL + '?userId=' + maxUserId);
+      const json = await resp.json();
+      renderMyRequests(json.requests || []);
+    } catch(e) {
+      // В демо-режиме показываем тестовые данные
+      renderMyRequests(MOCK_REQUESTS);
+    }
+  }
+
+  const STATUS_LABELS = {
+    new:       ['Новая',      'status-new'],
+    confirmed: ['Подтверждена','status-confirmed'],
+    cancelled: ['Отменена',   'status-cancelled'],
+    completed: ['Завершена',  'status-completed'],
+    rejected:  ['Отклонена',  'status-cancelled'],
+  };
+
+  function renderMyRequests(requests) {
+    const cont = document.getElementById('myrequests-content');
+    if (!requests.length) {
+      cont.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>У вас пока нет заявок.<br/>Воспользуйтесь вкладкой «Заявка».</p></div>';
+      return;
+    }
+    cont.innerHTML = '<div style="padding-bottom:4px;">' + requests.map(req => {
+      const [label, cls] = STATUS_LABELS[req.status] || ['Неизвестно', 'status-new'];
+      const canCancel = req.status === 'new' || req.status === 'confirmed';
+      const isCompleted = req.status === 'completed';
+      const tripDt = req.tripDate ? req.tripDate.split('-').reverse().join('.') : '—';
+      const actions = [];
+      if (canCancel) actions.push(`<button class="btn-cancel-req" onclick="cancelRequest('${req.id}', this)">✕ Отменить заявку</button>`);
+      if (isCompleted) actions.push(`<button class="btn-review-req" onclick="openFeedback('${req.id}')">⭐ Оставить отзыв</button>`);
+
+      return `
+        <div class="req-card">
+          <div class="req-card-header">
+            <div class="req-id">#${req.id.slice(-6).toUpperCase()}</div>
+            <div class="req-status ${cls}">${label}</div>
+          </div>
+          <div class="req-row">📅 <strong>${tripDt}${req.tripTime ? ' в ' + req.tripTime : ''}</strong></div>
+          <div class="req-row">🏛 ${req.institution}</div>
+          <div class="req-row">📍 ${req.address}</div>
+          ${req.cost && req.cost !== '—' ? `<div class="req-row">💰 Стоимость: <strong>${req.cost}</strong></div>` : ''}
+          ${req.car && req.car !== '—' ? `<div class="req-row">🚗 ${req.car}</div>` : ''}
+          ${req.operatorComment ? `<div class="req-row" style="color:var(--warn)">💬 ${req.operatorComment}</div>` : ''}
+          ${actions.length ? `<div class="req-actions">${actions.join('')}</div>` : ''}
+        </div>`;
+    }).join('') + '</div>';
+  }
+
+  function openFeedback(reqId) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelector('[data-screen="screen-feedback"]').classList.add('active');
+    document.getElementById('screen-feedback').classList.add('active');
+    document.getElementById('feedback-request-id').value = reqId;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function cancelRequest(id, btn) {
+    if (!confirm('Отменить заявку? Это действие нельзя отменить.')) return;
+    btn.disabled = true;
+    btn.textContent = 'Отмена…';
+    try {
+      // TODO: endpoint CANCEL_URL — POST { requestId, userId }
+      const resp = await fetch(CANCEL_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId: id, userId: maxUserId }),
+      });
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || '');
+      loadMyRequests();
+    } catch(e) {
+      // В демо — просто перезагружаем
+      loadMyRequests();
+    }
+  }
+
+  // ── ОТЗЫВ ─────────────────────────────────────────
+  let currentRating = 0;
+
+  function setRating(n) {
+    currentRating = n;
+    document.querySelectorAll('.star').forEach((s, i) => {
+      s.classList.toggle('active', i < n);
+    });
+    clearError('rating');
+  }
+
+  async function submitFeedback() {
+    let ok = true;
+
+    if (!currentRating) {
+      document.getElementById('err-rating').classList.add('visible');
+      ok = false;
+    }
+
+    const text = document.getElementById('feedback-text').value.trim();
+    if (!text) {
+      document.getElementById('feedback-text').classList.add('invalid');
+      document.getElementById('err-feedback-text').classList.add('visible');
+      ok = false;
+    }
+
+    if (!ok) return;
+
+    const btn = document.getElementById('btn-feedback');
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    const data = {
+      rating:    currentRating,
+      text,
+      cost:      document.getElementById('feedback-cost').value.trim(),
+      car:       document.getElementById('feedback-car').value.trim(),
+      requestId: document.getElementById('feedback-request-id').value.trim(),
+      userId:    maxUserId,
+      submittedAt: new Date().toISOString(),
+    };
+
+    try {
+      // TODO: endpoint FEEDBACK_URL — POST { rating, text, cost, car, requestId, userId }
+      await fetch(FEEDBACK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+    } catch(e) { /* игнорируем в демо */ }
+
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    document.getElementById('feedback-success').style.display = 'flex';
+    document.getElementById('feedback-text').value = '';
+    document.getElementById('feedback-cost').value = '';
+    document.getElementById('feedback-car').value = '';
+    document.getElementById('feedback-request-id').value = '';
+    setRating(0);
+    setTimeout(() => {
+      document.getElementById('feedback-success').style.display = 'none';
+    }, 5000);
+  }
+
+  // ── МАСКА ТЕЛЕФОНА ────────────────────────────────
+  function applyPhoneMask(el) {
+    el.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g,'');
+      if (v.startsWith('8')) v = '7' + v.slice(1);
+      if (!v.startsWith('7') && v.length > 0) v = '7' + v;
+      v = v.slice(0,11);
+      let f = '+7';
+      if (v.length > 1) f += ' (' + v.slice(1,4);
+      if (v.length >= 4) f += ') ' + v.slice(4,7);
+      if (v.length >= 7) f += '-' + v.slice(7,9);
+      if (v.length >= 9) f += '-' + v.slice(9,11);
+      this.value = f;
+      clearError('phone');
+    });
+    el.addEventListener('keydown', function(e) {
+      // При нажатии Backspace не даём курсору «прилипнуть» к маске
+      if (e.key === 'Backspace' && this.value === '+7') {
+        this.value = '';
+        e.preventDefault();
+      }
+    });
+    el.addEventListener('focus', function() {
+      if (!this.value) this.value = '+7 (';
+    });
+    el.addEventListener('blur', function() {
+      if (this.value === '+7 (' || this.value === '+7') this.value = '';
+    });
+  }
+
+  // ── ИНИЦИАЛИЗАЦИЯ: вешаем все обработчики через addEventListener ──────────
+  document.addEventListener('DOMContentLoaded', function () {
+
+    // Маска телефона
+    applyPhoneMask(document.getElementById('phone'));
+
+    document.getElementById('dest-category').addEventListener('change', onDestCategoryChange);
+    document.getElementById('dest-institution').addEventListener('change', onDestInstitutionChange);
+    document.getElementById('trip-date').addEventListener('change', onDateChange);
+    document.getElementById('trip-time').addEventListener('change', onTimeChange);
+    document.getElementById('need-return').addEventListener('change', onReturnChange);
+
+    // Сброс ошибок при вводе
+    ['fullname','address','cert-number','comment','dest-address'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('input', function() { clearError(id); });
+    });
+    ['category'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('change', function() { clearError(id); });
+    });
+    document.getElementById('consent').addEventListener('change', function() { clearError('consent'); });
+    document.getElementById('consent-id').addEventListener('change', function() { clearError('consent-id'); });
+
+  });
+  </script>
+</body>
+</html>

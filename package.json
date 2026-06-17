@@ -1,0 +1,21 @@
+{
+  "name": "social-taxi-bot",
+  "version": "1.0.0",
+  "description": "Чат-бот социального такси г. Кургана для мессенджера MAX",
+  "type": "module",
+  "main": "bot.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "concurrently \"node bot.js\" \"node server.js\"",
+    "dev": "concurrently \"node --watch bot.js\" \"node --watch server.js\"",
+    "start:bot": "node bot.js",
+    "start:server": "node server.js"
+  },
+  "dependencies": {
+    "@maxhub/max-bot-api": "^0.2.2",
+    "concurrently": "^10.0.3",
+    "dotenv": "^17.4.2"
+  }
+}
