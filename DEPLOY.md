@@ -45,16 +45,24 @@ feedback.json
 BOT_TOKEN=токен_бота_MAX
 ADMIN_IDS=19154272
 ADMIN_TOKEN=случайная_строка_минимум_16_символов
+WEBHOOK_SECRET=случайная_строка_для_MAX_webhook
 MINI_APP_URL=https://адрес-railway/miniapp/index.html
 PORT=3000
 DB_FILE=./requests.json
 FEEDBACK_FILE=./feedback.json
 ```
 
-5. Start command:
+5. Production start command:
 
 ```bash
 npm start
+```
+
+Она запускает HTTP-сервер с `/webhook` и не включает Long Polling.
+Для локальной разработки через Long Polling используйте:
+
+```bash
+npm run start:polling
 ```
 
 6. После деплоя Railway выдаст публичный HTTPS-домен. Откройте:

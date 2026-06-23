@@ -8,7 +8,9 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "concurrently \"node bot.js\" \"node server.js\"",
+    "start": "node server.js",
+    "start:webhook": "node server.js",
+    "start:polling": "concurrently \"node bot.js\" \"node server.js\"",
     "dev": "concurrently \"node --watch bot.js\" \"node --watch server.js\"",
     "start:bot": "node bot.js",
     "start:server": "node server.js"

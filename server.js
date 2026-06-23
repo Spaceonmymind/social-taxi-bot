@@ -45,6 +45,7 @@ import 'dotenv/config';
 import {
   handleNewRequest,
   handleFeedback,
+  processWebhookUpdate,
   cancelRequest,
   getRequestsByUser,
   getAllRequests,
@@ -54,6 +55,7 @@ import {
 } from './bot.js';
 
 const PORT = process.env.PORT || 3000;
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MINIAPP_FILE = join(__dirname, 'miniapp', 'index.html');
 
@@ -109,6 +111,11 @@ function isAdminRequest(req) {
   return token && token === process.env.ADMIN_TOKEN;
 }
 
+function isWebhookRequest(req) {
+  if (!WEBHOOK_SECRET) return true;
+  return req.headers['x-max-bot-api-secret'] === WEBHOOK_SECRET;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // СЕРВЕР
 // ─────────────────────────────────────────────────────────────────────────────
@@ -123,6 +130,39 @@ const server = http.createServer(async (req, res) => {
   }
 
   const url = req.url.split('?')[0];
+
+  // ── POST /webhook ─────────────────────────────────────────────────────────
+  // MAX присылает сюда один объект Update. Сразу отвечаем 200, затем передаём
+  // событие тем же обработчикам bot.js, которые используются в long polling.
+  if (req.method === 'POST' && url === '/webhook') {
+    if (!isWebhookRequest(req)) {
+      return json(res, 401, { error: 'Invalid webhook secret' });
+    }
+
+    try {
+      const update = await readBody(req);
+      if (!update.update_type) {
+        return json(res, 400, { error: 'Не указан update_type' });
+      }
+
+      console.log(
+        `📨 MAX webhook: type=${update.update_type}` +
+        ` timestamp=${update.timestamp || '—'}` +
+        ` chat=${update.chat_id || update.message?.recipient?.chat_id || '—'}` +
+        ` user=${update.user?.user_id || update.message?.sender?.user_id || '—'}`
+      );
+
+      json(res, 200, { ok: true });
+
+      processWebhookUpdate(update).catch(error => {
+        console.error('Ошибка обработки MAX webhook:', error);
+      });
+      return;
+    } catch(e) {
+      console.error('Ошибка чтения MAX webhook:', e.message);
+      return json(res, 400, { error: e.message });
+    }
+  }
 
   if (req.method === 'GET' && (url === '/' || url === '/miniapp' || url === '/miniapp/index.html')) {
     try {
@@ -415,6 +455,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`🌐 Сервер запущен на порту ${PORT}`);
+  console.log(`   POST http://localhost:${PORT}/webhook`);
   console.log(`   POST http://localhost:${PORT}/api/submit-request`);
   console.log(`   POST http://localhost:${PORT}/api/cancel-request`);
   console.log(`   GET  http://localhost:${PORT}/api/my-requests?userId=<id>`);

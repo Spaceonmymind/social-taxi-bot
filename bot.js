@@ -573,6 +573,22 @@ export async function handleFeedback(data) {
   return fb;
 }
 
+export async function processWebhookUpdate(update) {
+  if (!update || typeof update !== 'object' || !update.update_type) {
+    throw new Error('Некорректное событие MAX: отсутствует update_type');
+  }
+
+  // В режиме webhook bot.start() не вызывается, поэтому сведения о боте
+  // загружаем один раз перед обработкой первого события.
+  if (!bot.botInfo) {
+    bot.botInfo = await bot.api.getMyInfo();
+  }
+
+  // В текущей версии @maxhub/max-bot-api обработчик Update не опубликован
+  // в типах, но используется библиотекой для long polling и доступен в runtime.
+  await bot.handleUpdate(update);
+}
+
 async function notifyUser(userId, text) {
   if (!userId) return;
   try {
