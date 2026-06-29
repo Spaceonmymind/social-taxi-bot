@@ -33,6 +33,7 @@
  *   BOT_TOKEN    — токен бота из MAX Developer Portal
  *   ADMIN_IDS    — числовые ID операторов через запятую (узнать: @userinfobot в MAX)
  *   MINI_APP_URL — URL опубликованного index.html
+ *   MINI_APP_DEEPLINK — ссылка MAX для открытия привязанного мини-приложения
  *   DB_FILE      — путь к файлу базы заявок (по умолчанию ./requests.json)
  *   FEEDBACK_FILE— путь к файлу отзывов (по умолчанию ./feedback.json)
  */
@@ -50,6 +51,7 @@ const bot = new Bot(process.env.BOT_TOKEN);
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MINI_APP_URL = process.env.MINI_APP_URL || 'https://your-domain.ru/miniapp/';
+const MINI_APP_DEEPLINK = process.env.MINI_APP_DEEPLINK || MINI_APP_URL;
 
 const ADMIN_IDS = (process.env.ADMIN_IDS || '')
   .split(',')
@@ -336,17 +338,13 @@ function isLocalMiniAppUrl(url) {
 }
 
 function miniAppButton(text, url) {
-  return {
-    type: 'open_app',
-    text,
-    webApp: url,
-  };
+  return Keyboard.button.link(text, url);
 }
 
 function mainKeyboard() {
-  const orderButton = isLocalMiniAppUrl(MINI_APP_URL)
+  const orderButton = isLocalMiniAppUrl(MINI_APP_DEEPLINK)
     ? Keyboard.button.callback('🚖 Заказать такси', 'order_local_unavailable')
-    : miniAppButton('🚖 Заказать такси', MINI_APP_URL);
+    : miniAppButton('🚖 Заказать такси', MINI_APP_DEEPLINK);
 
   return Keyboard.inlineKeyboard([
     [orderButton],
@@ -686,9 +684,9 @@ bot.action('show_feedback_info', async (ctx) => {
     attachments: [
       Keyboard.inlineKeyboard([
         [
-          isLocalMiniAppUrl(MINI_APP_URL)
+          isLocalMiniAppUrl(MINI_APP_DEEPLINK)
             ? Keyboard.button.callback('⭐ Открыть форму отзыва', 'order_local_unavailable')
-            : miniAppButton('⭐ Открыть форму отзыва', MINI_APP_URL),
+            : miniAppButton('⭐ Открыть форму отзыва', MINI_APP_DEEPLINK),
         ],
         [Keyboard.button.callback('← Главное меню', 'go_home')],
       ])
