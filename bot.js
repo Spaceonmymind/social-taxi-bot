@@ -331,10 +331,22 @@ function formatRequestForUser(req) {
 // КЛАВИАТУРЫ
 // ─────────────────────────────────────────────────────────────────────────────
 
+function isLocalMiniAppUrl(url) {
+  return /(^|\/\/)(localhost|127\.0\.0\.1)(:|\/|$)/.test(url);
+}
+
+function miniAppButton(text, url) {
+  return {
+    type: 'open_app',
+    text,
+    url,
+  };
+}
+
 function mainKeyboard() {
-  const orderButton = MINI_APP_URL.includes('localhost')
+  const orderButton = isLocalMiniAppUrl(MINI_APP_URL)
     ? Keyboard.button.callback('🚖 Заказать такси', 'order_local_unavailable')
-    : Keyboard.button.link('🚖 Заказать такси', MINI_APP_URL);
+    : miniAppButton('🚖 Заказать такси', MINI_APP_URL);
 
   return Keyboard.inlineKeyboard([
     [orderButton],
@@ -673,7 +685,11 @@ bot.action('show_feedback_info', async (ctx) => {
     format: 'markdown',
     attachments: [
       Keyboard.inlineKeyboard([
-        [Keyboard.button.openApp('⭐ Открыть форму отзыва', MINI_APP_URL)],
+        [
+          isLocalMiniAppUrl(MINI_APP_URL)
+            ? Keyboard.button.callback('⭐ Открыть форму отзыва', 'order_local_unavailable')
+            : miniAppButton('⭐ Открыть форму отзыва', MINI_APP_URL),
+        ],
         [Keyboard.button.callback('← Главное меню', 'go_home')],
       ])
     ]
