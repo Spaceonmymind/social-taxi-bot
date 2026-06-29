@@ -339,7 +339,7 @@ function miniAppButton(text, url) {
   return {
     type: 'open_app',
     text,
-    web_app: { url },
+    webApp: url,
   };
 }
 
